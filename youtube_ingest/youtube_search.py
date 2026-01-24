@@ -24,7 +24,8 @@ class YouTubeSearcher:
             config: Configuration object with YouTube API credentials.
         """
         self.config = config
-        self.youtube = build('youtube', 'v3', developerKey=config.youtube_api_key)
+        self.youtube = build('youtube', 'v3', developerKey=config.youtube_api_key,
+                            cache_discovery=False)
     
     def search(self, query: SearchQuery) -> List[Video]:
         """Search for videos on YouTube.

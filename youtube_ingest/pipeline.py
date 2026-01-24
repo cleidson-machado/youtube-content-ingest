@@ -28,9 +28,8 @@ class Pipeline:
         self.enricher = MetadataEnricher(config)
         self.api_client = APIClient(config)
         
-        # Initialize deduplicator with existing video IDs from API
-        existing_ids = self.api_client.get_existing_video_ids()
-        self.deduplicator = Deduplicator(config, existing_ids)
+        # Initialize deduplicator without existing IDs (loaded lazily in run())
+        self.deduplicator = Deduplicator(config)
         
         logger.info("Pipeline initialized")
     
@@ -44,6 +43,13 @@ class Pipeline:
             Dictionary with pipeline execution results.
         """
         logger.info(f"Starting pipeline with {len(queries)} queries")
+        
+        # Load existing video IDs from API for deduplication
+        try:
+            existing_ids = self.api_client.get_existing_video_ids()
+            self.deduplicator.add_existing_ids(existing_ids)
+        except Exception as e:
+            logger.warning(f"Failed to load existing video IDs: {e}")
         
         results = {
             "queries_processed": 0,
