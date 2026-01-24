@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  youtube-ingest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: youtube-content-ingest
+    env_file:
+      - .env
+    environment:
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - SEARCH_QUERY=${SEARCH_QUERY:-python programming}
+      - MAX_RESULTS=${MAX_RESULTS:-10}
+      - CONTENT_API_BASE_URL=${CONTENT_API_BASE_URL}
+      - CONTENT_API_BEARER_TOKEN=${CONTENT_API_BEARER_TOKEN}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    restart: unless-stopped
