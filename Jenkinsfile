@@ -16,9 +16,7 @@ pipeline {
             steps {
                 sh """
                     cd ${env.WORKSPACE}
-                    docker compose down || true
-                    docker rm -f youtube-ingest || true
-                    docker compose up --abort-on-container-exit
+                    docker compose up 
                 """
             }
         }
