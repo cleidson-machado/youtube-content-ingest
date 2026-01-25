@@ -95,10 +95,10 @@ pipeline {
                         (echo '❌ Network proxy-network not found!' && exit 1)
                     """
                     
-                    // Test internet connectivity
+                    // Test internet connectivity (YouTube API endpoint)
                     sh """
-                        curl -f -s -o /dev/null -w '%{http_code}' https://www.googleapis.com | grep -q 200 || \
-                        (echo '❌ Cannot reach Google APIs!' && exit 1)
+                        curl -f -s -o /dev/null --max-time 10 https://youtube.googleapis.com || \
+                        (echo '❌ Cannot reach YouTube APIs!' && exit 1)
                     """
                     
                     echo "✅ Pre-flight checks passed"
