@@ -1,0 +1,34 @@
+[MASTER]
+# Arquivos/pastas a ignorar
+ignore=venv,.venv,env,.env,node_modules,.git
+
+[MESSAGES CONTROL]
+# Desabilitar avisos específicos
+disable=
+    # W1203: logging-fstring-interpolation - permite f-strings em logs (mais moderno)
+    W1203,
+    # C0301: line-too-long - permite linhas longas quando necessário
+    C0301,
+    # C0103: invalid-name - permite nomes de variáveis curtas como 'e', 'i', 'df'
+    C0103,
+    # C0114: missing-module-docstring - nem todo módulo precisa de docstring
+    C0114,
+    # C0115: missing-class-docstring - classes pequenas não precisam
+    C0115,
+    # C0116: missing-function-docstring - funções pequenas/óbvias não precisam
+    C0116
+
+[FORMAT]
+# Comprimento máximo de linha (flexível)
+max-line-length=120
+
+# Número máximo de argumentos para funções
+max-args=10
+
+[BASIC]
+# Padrões de nomes aceitáveis
+good-names=i,j,k,e,f,_,id,df,db,qa,qb
+
+[DESIGN]
+# Número máximo de atributos em uma classe
+max-attributes=15

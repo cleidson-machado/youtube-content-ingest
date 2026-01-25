@@ -147,36 +147,74 @@ class APIClient:
             return {"success": False, "error": str(e)}
     
     def get_existing_urls(self) -> Set[str]:
-        """Fetch existing video URLs from the content API.
+        """Fetch existing video URLs from the content API using pagination.
         
         Returns:
             Set of existing video URLs.
         """
-        url = self.base_url
+        all_urls = set()
+        page = 0
+        page_size = 50  # Buscar 50 itens por página (padrão da API REST)
+        total_pages = None
         
         try:
-            logger.info(f"🔍 Fetching existing URLs from endpoint: {url}")
-            response = self.session.get(url, timeout=10)
+            logger.info(f"🔍 Fetching existing URLs from endpoint: {self.base_url}")
             
-            if response.ok:
-                existing_data = response.json()
+            while True:
+                # Usar endpoint paginado
+                url = f"{self.base_url}/paged?page={page}&size={page_size}"
                 
-                # Handle both list and object-with-items formats
-                items = existing_data if isinstance(existing_data, list) else existing_data.get('items', [])
+                response = self.session.get(url, timeout=10)
                 
-                urls = {item['url'] for item in items if 'url' in item}
-                logger.info(f"✓ Found {len(urls)} existing URLs in database\n")
+                if not response.ok:
+                    if response.status_code in [401, 403]:
+                        logger.warning("⚠️  AUTHENTICATION ERROR: Check if API token is correct")
+                    logger.warning(
+                        f"✗ Failed to fetch page {page}. Status: {response.status_code}, "
+                        f"Response: {response.text}"
+                    )
+                    break
                 
-                return urls
-            else:
-                logger.warning(
-                    f"✗ Failed to fetch existing URLs. Status: {response.status_code}, "
-                    f"Response: {response.text}"
-                )
-                if response.status_code in [401, 403]:
-                    logger.warning("⚠️  AUTHENTICATION ERROR: Check if API token is correct")
-                return set()
+                data = response.json()
                 
+                # Extrair informações de paginação (adaptado à API)
+                if total_pages is None:
+                    total_pages = data.get('totalPages', 1)
+                    total_items = data.get('totalItems', 0)
+                    logger.info(f"📊 Total items: {total_items}, Total pages: {total_pages}")
+                
+                # Extrair items da página atual
+                items = data.get('content', [])
+                
+                if not items:
+                    logger.info(f"  ℹ️  Page {page + 1}: No items found")
+                    break
+                
+                # Adicionar URLs ao set
+                page_urls = {item['url'] for item in items if 'url' in item}
+                all_urls.update(page_urls)
+                
+                current_page = data.get('currentPage', page)
+                logger.info(f"  ✓ Page {current_page + 1}/{total_pages}: {len(page_urls)} URLs fetched")
+                
+                # Verificar se há mais páginas
+                # A API retorna totalPages, então se currentPage + 1 >= totalPages, acabou
+                if current_page + 1 >= total_pages:
+                    break
+                
+                page += 1
+                
+                # Limite de segurança
+                if page > 1000:
+                    logger.warning("⚠️  Safety limit reached (1000 pages)")
+                    break
+            
+            logger.info(f"✅ Total: {len(all_urls)} existing URLs in database\n")
+            return all_urls
+            
         except requests.exceptions.RequestException as e:
             logger.warning(f"✗ Connection error while fetching existing URLs: {e}")
-            return set()
+            return all_urls  # Retorna o que conseguiu buscar até agora
+        except Exception as e:
+            logger.error(f"✗ Unexpected error while fetching existing URLs: {e}")
+            return all_urls
