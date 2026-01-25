@@ -4,7 +4,10 @@ pipeline {
     stages {
         stage('Run') {
             steps {
-                sh "docker compose up"
+                sh """
+                    cp /opt/apps/web-scraping-process/youtube-content-ingest/.env .env
+                    docker compose up
+                """
             }
         }
     }
