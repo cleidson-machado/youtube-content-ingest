@@ -46,23 +46,38 @@ pipeline {
                 script {
                     echo "📊 Parsing pipeline results..."
                     
-                    // Extract metrics from logs (if available)
+                    // Extract metrics from summary section
+                    def pagesSearched = sh(
+                        script: "grep 'Pages Searched:' pipeline-output.log | tail -1 | awk -F': ' '{print \$2}' || echo '0'",
+                        returnStdout: true
+                    ).trim()
+                    
                     def videosFound = sh(
-                        script: "grep -i 'videos found\\|new videos' pipeline-output.log | tail -1 || echo 'N/A'",
+                        script: "grep 'New Videos Found:' pipeline-output.log | tail -1 | awk -F': ' '{print \$2}' || echo '0'",
                         returnStdout: true
                     ).trim()
                     
                     def videosPosted = sh(
-                        script: "grep -i 'videos posted\\|posted successfully' pipeline-output.log | tail -1 || echo 'N/A'",
+                        script: "grep 'Videos Posted:' pipeline-output.log | tail -1 | awk -F': ' '{print \$2}' || echo '0'",
                         returnStdout: true
                     ).trim()
+                    
+                    def videosFailed = sh(
+                        script: "grep 'Videos Failed:' pipeline-output.log | tail -1 | awk -F': ' '{print \$2}' || echo '0'",
+                        returnStdout: true
+                    ).trim()
+                    
+                    // Set build description
+                    currentBuild.description = "Found: ${videosFound} | Posted: ${videosPosted} | Failed: ${videosFailed}"
                     
                     echo """
                     ════════════════════════════════════════
                          PIPELINE EXECUTION SUMMARY
                     ════════════════════════════════════════
-                    Videos Found:  ${videosFound}
-                    Videos Posted: ${videosPosted}
+                    Pages Searched:    ${pagesSearched}
+                    New Videos Found:  ${videosFound}
+                    Videos Posted:     ${videosPosted}
+                    Videos Failed:     ${videosFailed}
                     ════════════════════════════════════════
                     """
                     
@@ -79,7 +94,6 @@ pipeline {
                 echo "🧹 Cleaning up containers..."
                 sh """
                     docker-compose down || true
-                    docker system prune -f --filter 'until=24h' || true
                 """
             }
         }
