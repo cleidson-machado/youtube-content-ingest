@@ -13,15 +13,15 @@ logger = logging.getLogger(__name__)
 class Deduplicator:
     """Handles deduplication of videos against existing catalog."""
     
-    def __init__(self, config: Config, existing_video_ids: Set[str] = None):
+    def __init__(self, config: Config, existing_urls: Set[str] = None):
         """Initialize the deduplicator.
         
         Args:
             config: Configuration object.
-            existing_video_ids: Set of video IDs that already exist in the catalog.
+            existing_urls: Set of video URLs that already exist in the catalog.
         """
         self.config = config
-        self.existing_video_ids = existing_video_ids or set()
+        self.existing_urls = existing_urls or set()
     
     def deduplicate(self, videos: List[Video]) -> List[Video]:
         """Remove duplicate videos from the list.
@@ -36,15 +36,17 @@ class Deduplicator:
             logger.info("Deduplication is disabled, skipping")
             return videos
         
-        logger.info(f"Deduplicating {len(videos)} videos against catalog of {len(self.existing_video_ids)}")
+        logger.info(f"Deduplicating {len(videos)} videos against catalog of {len(self.existing_urls)} URLs")
         
         unique_videos = []
         duplicate_count = 0
         
         for video in videos:
-            if video.video_id not in self.existing_video_ids:
+            video_url = f"https://www.youtube.com/watch?v={video.video_id}"
+            
+            if video_url not in self.existing_urls:
                 unique_videos.append(video)
-                self.existing_video_ids.add(video.video_id)
+                self.existing_urls.add(video_url)
             else:
                 duplicate_count += 1
                 logger.debug(f"Duplicate video found: {video.video_id} - {video.title}")
@@ -52,11 +54,11 @@ class Deduplicator:
         logger.info(f"Found {duplicate_count} duplicates, {len(unique_videos)} unique videos")
         return unique_videos
     
-    def add_existing_ids(self, video_ids: Set[str]) -> None:
-        """Add video IDs to the existing catalog.
+    def add_existing_urls(self, urls: Set[str]) -> None:
+        """Add URLs to the existing catalog.
         
         Args:
-            video_ids: Set of video IDs to add.
+            urls: Set of URLs to add.
         """
-        self.existing_video_ids.update(video_ids)
-        logger.info(f"Added {len(video_ids)} video IDs to catalog")
+        self.existing_urls.update(urls)
+        logger.info(f"Added {len(urls)} URLs to catalog")
