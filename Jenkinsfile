@@ -27,9 +27,6 @@ pipeline {
         IMAGE_NAME = 'youtube-ingest'
         IMAGE_TAG = 'latest'
         
-        // Project directory
-        PROJECT_DIR = '/opt/apps/web-scraping-process/youtube-content-ingest'
-        
         // Search configuration (can be overridden)
         SEARCH_QUERY = 'tipos de visto para portugal'
         TARGET_NEW_VIDEOS = '10'
@@ -45,11 +42,9 @@ pipeline {
             steps {
                 script {
                     echo "📦 Checking out source code..."
-                    // If using Git, uncomment below:
-                    // checkout scm
-                    
-                    // For local execution on VPS:
-                    sh "cd ${PROJECT_DIR} && git pull origin main || true"
+                    // Code already checked out by Jenkins SCM
+                    // No additional checkout needed
+                    echo "Working directory: ${env.WORKSPACE}"
                 }
             }
         }
@@ -73,16 +68,15 @@ pipeline {
             steps {
                 script {
                     echo "🐳 Building Docker image..."
-                    dir(PROJECT_DIR) {
-                        sh """
-                            docker build \
-                                --tag ${IMAGE_NAME}:${IMAGE_TAG} \
-                                --tag ${IMAGE_NAME}:build-${BUILD_NUMBER} \
-                                --label "build.number=${BUILD_NUMBER}" \
-                                --label "build.date=\$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
-                                .
-                        """
-                    }
+                    // Build from Jenkins workspace
+                    sh """
+                        docker build \
+                            --tag ${IMAGE_NAME}:${IMAGE_TAG} \
+                            --tag ${IMAGE_NAME}:build-${BUILD_NUMBER} \
+                            --label "build.number=${BUILD_NUMBER}" \
+                            --label "build.date=\$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+                            .
+                    """
                 }
             }
         }
