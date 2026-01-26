@@ -37,27 +37,42 @@ class Video:
     # Additional metadata
     tags: List[str] = field(default_factory=list)
     category_id: Optional[str] = None
-    duration: Optional[str] = None
+    category_name: Optional[str] = None
+    duration_seconds: int = 0
+    duration_iso: Optional[str] = None
     thumbnail_url: Optional[str] = None
+    
+    # Video quality metadata
+    definition: Optional[str] = None  # 'hd' or 'sd'
+    caption: bool = False
+    default_language: Optional[str] = None
+    default_audio_language: Optional[str] = None
     
     # Enriched data
     enriched_metadata: Dict[str, Any] = field(default_factory=dict)
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert video to dictionary format."""
+        """Convert video to dictionary format for API submission."""
+        # Convert tags list to comma-separated string
+        tags_string = ', '.join(self.tags) if self.tags else None
+        
         return {
-            "video_id": self.video_id,
             "title": self.title,
             "description": self.description,
-            "channel_id": self.channel_id,
-            "channel_title": self.channel_title,
-            "published_at": self.published_at.isoformat(),
-            "view_count": self.view_count,
-            "like_count": self.like_count,
-            "comment_count": self.comment_count,
-            "tags": self.tags,
-            "category_id": self.category_id,
-            "duration": self.duration,
-            "thumbnail_url": self.thumbnail_url,
-            "enriched_metadata": self.enriched_metadata,
+            "url": f"https://www.youtube.com/watch?v={self.video_id}",
+            "channelName": self.channel_title,
+            "type": "VIDEO",
+            "thumbnailUrl": self.thumbnail_url,
+            "categoryId": self.category_id,
+            "categoryName": self.category_name,
+            "tags": tags_string,
+            "durationSeconds": self.duration_seconds,
+            "durationIso": self.duration_iso,
+            "definition": self.definition,
+            "caption": self.caption,
+            "viewCount": self.view_count,
+            "likeCount": self.like_count,
+            "commentCount": self.comment_count,
+            "defaultLanguage": self.default_language,
+            "defaultAudioLanguage": self.default_audio_language,
         }

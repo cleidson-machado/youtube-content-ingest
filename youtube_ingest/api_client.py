@@ -1,7 +1,7 @@
 """Content API client for posting video records."""
 
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Set
 import requests
 
 from .models import Video
@@ -24,10 +24,10 @@ class APIClient:
         self.base_url = config.content_api_url.rstrip('/')
         self.session = requests.Session()
         
-        # Set up authentication headers if API key is provided
-        if config.content_api_key:
+        # Set up authentication headers if API token is provided
+        if config.content_api_token:
             self.session.headers.update({
-                'Authorization': f'Bearer {config.content_api_key}',
+                'Authorization': f'Bearer {config.content_api_token}',
                 'Content-Type': 'application/json',
             })
     
@@ -45,6 +45,7 @@ class APIClient:
             return {"success": True, "posted": 0, "failed": 0}
         
         logger.info(f"Posting {len(videos)} videos to content API")
+        logger.info("=" * 80)
         
         results = {
             "success": True,
@@ -55,10 +56,13 @@ class APIClient:
         
         for video in videos:
             try:
+                # Log video details before posting
+                self._log_video_details(video)
+                
                 response = self._post_single_video(video)
                 if response.get('success'):
                     results['posted'] += 1
-                    logger.debug(f"Successfully posted video: {video.video_id}")
+                    logger.info(f"   ✓ Created successfully!")
                 else:
                     results['failed'] += 1
                     error_msg = response.get('error', 'Unknown error')
@@ -66,24 +70,54 @@ class APIClient:
                         'video_id': video.video_id,
                         'error': error_msg
                     })
-                    logger.warning(f"Failed to post video {video.video_id}: {error_msg}")
+                    logger.warning(f"   ✗ Error: {error_msg}")
             except Exception as e:
                 results['failed'] += 1
                 results['errors'].append({
                     'video_id': video.video_id,
                     'error': str(e)
                 })
-                logger.error(f"Error posting video {video.video_id}: {e}")
+                logger.error(f"   ✗ Exception: {e}")
+            
+            logger.info("-" * 80)
         
         if results['failed'] > 0:
             results['success'] = False
         
         logger.info(
-            f"Posted {results['posted']} videos successfully, "
+            f"\n✅ Process completed: {results['posted']} videos posted successfully, "
             f"{results['failed']} failed"
         )
         
         return results
+    
+    def _log_video_details(self, video: Video) -> None:
+        """Log video details in a user-friendly format.
+        
+        Args:
+            video: Video object to log.
+        """
+        title_display = video.title[:70] if len(video.title) > 70 else video.title
+        logger.info(f"\n📹 Video: {title_display}")
+        logger.info(f"   ID: {video.video_id}")
+        logger.info(f"   Channel: {video.channel_title}")
+        logger.info(f"\n   📊 COMPLETE DATA (SENDING TO API):")
+        logger.info(f"   ├─ Category: {video.category_name or 'N/A'} (ID: {video.category_id or 'N/A'})")
+        
+        # Display tags preview
+        tags_display = ', '.join(video.tags) if video.tags else 'No tags'
+        if len(tags_display) > 100:
+            tags_display = tags_display[:100] + '...'
+        logger.info(f"   ├─ Tags: {tags_display}")
+        
+        logger.info(f"   ├─ Duration: {video.duration_seconds} seconds ({video.duration_iso})")
+        logger.info(f"   ├─ Definition: {video.definition or 'N/A'}")
+        logger.info(f"   ├─ Caption: {video.caption}")
+        logger.info(f"   ├─ Views: {video.view_count:,}")
+        logger.info(f"   ├─ Likes: {video.like_count:,}")
+        logger.info(f"   ├─ Comments: {video.comment_count:,}")
+        logger.info(f"   ├─ Language: {video.default_language or 'N/A'}")
+        logger.info(f"   └─ Audio Language: {video.default_audio_language or 'N/A'}")
     
     def _post_single_video(self, video: Video) -> Dict[str, Any]:
         """Post a single video to the API.
@@ -94,35 +128,93 @@ class APIClient:
         Returns:
             API response.
         """
-        url = f"{self.base_url}/videos"
+        url = self.base_url  # Endpoint expects base URL directly
         data = video.to_dict()
         
         try:
-            response = self.session.post(url, json=data, timeout=30)
-            response.raise_for_status()
-            return {"success": True, "data": response.json()}
+            response = self.session.post(url, json=data, timeout=10)
+            
+            # Check for 201 Created status
+            if response.status_code == 201:
+                return {"success": True, "data": response.json() if response.text else None}
+            else:
+                return {
+                    "success": False, 
+                    "error": f"Status {response.status_code}: {response.text}"
+                }
         except requests.exceptions.RequestException as e:
             logger.error(f"API request failed: {e}")
             return {"success": False, "error": str(e)}
     
-    def get_existing_video_ids(self) -> set:
-        """Fetch existing video IDs from the content API.
+    def get_existing_urls(self) -> Set[str]:
+        """Fetch existing video URLs from the content API using pagination.
         
         Returns:
-            Set of existing video IDs.
+            Set of existing video URLs.
         """
-        url = f"{self.base_url}/videos/ids"
+        all_urls = set()
+        page = 0
+        page_size = 50  # Buscar 50 itens por página (padrão da API REST)
+        total_pages = None
         
         try:
-            logger.info("Fetching existing video IDs from API")
-            response = self.session.get(url, timeout=30)
-            response.raise_for_status()
+            logger.info(f"🔍 Fetching existing URLs from endpoint: {self.base_url}")
             
-            data = response.json()
-            video_ids = set(data.get('video_ids', []))
-            logger.info(f"Retrieved {len(video_ids)} existing video IDs")
+            while True:
+                # Usar endpoint paginado
+                url = f"{self.base_url}/paged?page={page}&size={page_size}"
+                
+                response = self.session.get(url, timeout=10)
+                
+                if not response.ok:
+                    if response.status_code in [401, 403]:
+                        logger.warning("⚠️  AUTHENTICATION ERROR: Check if API token is correct")
+                    logger.warning(
+                        f"✗ Failed to fetch page {page}. Status: {response.status_code}, "
+                        f"Response: {response.text}"
+                    )
+                    break
+                
+                data = response.json()
+                
+                # Extrair informações de paginação (adaptado à API)
+                if total_pages is None:
+                    total_pages = data.get('totalPages', 1)
+                    total_items = data.get('totalItems', 0)
+                    logger.info(f"📊 Total items: {total_items}, Total pages: {total_pages}")
+                
+                # Extrair items da página atual
+                items = data.get('content', [])
+                
+                if not items:
+                    logger.info(f"  ℹ️  Page {page + 1}: No items found")
+                    break
+                
+                # Adicionar URLs ao set
+                page_urls = {item['url'] for item in items if 'url' in item}
+                all_urls.update(page_urls)
+                
+                current_page = data.get('currentPage', page)
+                logger.info(f"  ✓ Page {current_page + 1}/{total_pages}: {len(page_urls)} URLs fetched")
+                
+                # Verificar se há mais páginas
+                # A API retorna totalPages, então se currentPage + 1 >= totalPages, acabou
+                if current_page + 1 >= total_pages:
+                    break
+                
+                page += 1
+                
+                # Limite de segurança
+                if page > 1000:
+                    logger.warning("⚠️  Safety limit reached (1000 pages)")
+                    break
             
-            return video_ids
+            logger.info(f"✅ Total: {len(all_urls)} existing URLs in database\n")
+            return all_urls
+            
         except requests.exceptions.RequestException as e:
-            logger.warning(f"Failed to fetch existing video IDs: {e}")
-            return set()
+            logger.warning(f"✗ Connection error while fetching existing URLs: {e}")
+            return all_urls  # Retorna o que conseguiu buscar até agora
+        except Exception as e:
+            logger.error(f"✗ Unexpected error while fetching existing URLs: {e}")
+            return all_urls

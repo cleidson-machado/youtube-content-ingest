@@ -2,10 +2,9 @@
 
 import logging
 import sys
-from datetime import datetime, timedelta
+from dotenv import load_dotenv
 
 from youtube_ingest.config import Config
-from youtube_ingest.models import SearchQuery
 from youtube_ingest.pipeline import Pipeline
 
 
@@ -17,7 +16,7 @@ def setup_logging(log_level: str) -> None:
     """
     logging.basicConfig(
         level=getattr(logging, log_level.upper()),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        format='%(message)s',  # Simplified format for cleaner console output
         handlers=[
             logging.StreamHandler(sys.stdout),
         ]
@@ -26,6 +25,9 @@ def setup_logging(log_level: str) -> None:
 
 def main():
     """Main function to run the YouTube content ingest pipeline."""
+    # Load environment variables from .env file
+    load_dotenv()
+    
     # Load configuration from environment
     config = Config.from_env()
     
@@ -36,50 +38,36 @@ def main():
     try:
         # Validate configuration
         config.validate()
-        logger.info("Configuration validated successfully")
+        logger.info("Configuration validated successfully\n")
     except ValueError as e:
-        logger.error(f"Configuration error: {e}")
+        logger.error(f"❌ Configuration error: {e}")
+        logger.error("Please check your .env file and ensure all required variables are set.")
         sys.exit(1)
     
-    # Define search queries
-    # In a real implementation, these might come from a config file or database
-    queries = [
-        SearchQuery(
-            query="artificial intelligence tutorial",
-            max_results=10,
-            order="relevance",
-            published_after=datetime.now() - timedelta(days=30)
-        ),
-        SearchQuery(
-            query="machine learning explained",
-            max_results=10,
-            order="relevance",
-            published_after=datetime.now() - timedelta(days=30)
-        ),
-    ]
-    
-    logger.info(f"Starting pipeline with {len(queries)} search queries")
-    
     try:
-        # Initialize and run pipeline
+        # Initialize and run pipeline with incremental search
         pipeline = Pipeline(config)
-        results = pipeline.run(queries)
+        results = pipeline.run_incremental_search(
+            search_query=config.search_query,
+            target_count=config.target_new_videos,
+            max_pages=config.max_pages_to_search
+        )
         
-        # Log results
-        logger.info("=" * 50)
-        logger.info("Pipeline Execution Summary:")
-        logger.info(f"  Queries Processed: {results['queries_processed']}")
-        logger.info(f"  Videos Found: {results['videos_found']}")
-        logger.info(f"  Unique Videos: {results['videos_unique']}")
+        # Log results summary
+        logger.info("\n" + "=" * 80)
+        logger.info("📊 PIPELINE EXECUTION SUMMARY")
+        logger.info("=" * 80)
+        logger.info(f"  Pages Searched: {results.get('pages_searched', 0)}")
+        logger.info(f"  New Videos Found: {results['videos_found']}")
         logger.info(f"  Videos Posted: {results['videos_posted']}")
         logger.info(f"  Videos Failed: {results['videos_failed']}")
         
         if results['errors']:
-            logger.warning(f"  Errors: {len(results['errors'])}")
+            logger.warning(f"\n  ⚠️  Errors encountered: {len(results['errors'])}")
             for error in results['errors']:
                 logger.warning(f"    - {error}")
         
-        logger.info("=" * 50)
+        logger.info("=" * 80 + "\n")
         
         # Exit with appropriate code
         if results['videos_failed'] > 0 or results['errors']:
@@ -88,7 +76,7 @@ def main():
             sys.exit(0)
             
     except Exception as e:
-        logger.error(f"Pipeline execution failed: {e}", exc_info=True)
+        logger.error(f"❌ Pipeline execution failed: {e}", exc_info=True)
         sys.exit(1)
 
 

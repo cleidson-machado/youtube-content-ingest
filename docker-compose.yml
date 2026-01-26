@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  youtube-ingest:
+    # Build image from local Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    # Container name for easy identification
+    container_name: youtube-ingest
+    
+    # Restart policy: no (one-time job execution)
+    # Use 'unless-stopped' if you want to run as a daemon
+    restart: "no"
+    
+    # Environment variables (override with .env file or Jenkins)
+    environment:
+      # YouTube API Configuration
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      
+      # Content API Configuration
+      CONTENT_API_URL: ${CONTENT_API_URL:-https://api.aguide-ptbr.com.br/contents}
+      CONTENT_API_TOKEN: ${CONTENT_API_TOKEN:-}
+      
+      # Search Configuration
+      SEARCH_QUERY: ${SEARCH_QUERY:-tipos de visto para portugal}
+      TARGET_NEW_VIDEOS: ${TARGET_NEW_VIDEOS:-10}
+      MAX_PAGES_TO_SEARCH: ${MAX_PAGES_TO_SEARCH:-10}
+      MAX_RESULTS_PER_PAGE: ${MAX_RESULTS_PER_PAGE:-10}
+      
+      # Pipeline Configuration
+      ENABLE_DEDUPLICATION: ${ENABLE_DEDUPLICATION:-true}
+      ENABLE_ENRICHMENT: ${ENABLE_ENRICHMENT:-false}
+      
+      # Logging Configuration
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      
+      # Timezone
+      TZ: America/Sao_Paulo
+    
+    # Connect to external proxy-network (same as aguide-api)
+    networks:
+      - proxy-network
+    
+    # Resource limits (optional but recommended)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# External network (must be created beforehand)
+# Same network used by aguide-api-quarkus
+networks:
+  proxy-network:
+    external: true
