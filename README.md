@@ -56,11 +56,12 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # 4. Configurar credenciais
-cp .env.example .env
+cp .env.template .env
 nano .env  # Edite com suas credenciais
 ```
 
-**📘 Guia completo:** Veja [SETUP_MACOS.md](SETUP_MACOS.md) para troubleshooting e dicas.
+**📘 Guia completo:** Veja [SETUP_MACOS.md](x_temp_files/SETUP_MACOS.md) para troubleshooting e dicas.  
+**🔒 Segurança:** Leia [SECURITY.md](SECURITY.md) para práticas de segurança com credenciais.
 
 ### Linux/Windows
 
@@ -82,9 +83,11 @@ venv\Scripts\activate
 pip install -r requirements.txt
 
 # 5. Configurar credenciais
-cp .env.example .env
+cp .env.template .env
 # Edite .env com suas credenciais
 ```
+
+**🔒 Importante:** Nunca commite o arquivo `.env` com suas credenciais reais! Leia [SECURITY.md](SECURITY.md) para mais detalhes.
 
 ## Configuration
 

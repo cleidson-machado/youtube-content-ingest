@@ -23,5 +23,19 @@
     "python.linting.enabled": true,
     "python.linting.pylintArgs": [
         "--disable=W1203,C0301,C0103"
+    ],
+    
+    // GitHub Copilot configuration
+    "github.copilot.enable": {
+        "*": true,
+        "yaml": true,
+        "plaintext": true,
+        "markdown": true,
+        "python": true
+    },
+    "github.copilot.chat.codeGeneration.instructions": [
+        {
+            "file": ".github/copilot-instructions.md"
+        }
     ]
 }
