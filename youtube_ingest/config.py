@@ -1,8 +1,12 @@
 """Configuration management for the YouTube content ingest pipeline."""
 
 import os
+import logging
 from dataclasses import dataclass
 from typing import Optional
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -58,10 +62,37 @@ class Config:
         )
     
     def validate(self) -> None:
-        """Validate configuration."""
+        """Validate configuration with format checks."""
+        # Validate YouTube API key
         if not self.youtube_api_key:
             raise ValueError("YOUTUBE_API_KEY is required")
+        
+        # Check for placeholder values
+        placeholder_values = ['your_youtube_api_key_here', 'your_api_key', 'xxx', 'test']
+        if self.youtube_api_key.lower() in placeholder_values:
+            raise ValueError("YOUTUBE_API_KEY appears to be a placeholder. Please set a real API key.")
+        
+        # Validate YouTube API key format (should start with 'AIza')
+        if not self.youtube_api_key.startswith('AIza'):
+            logger.warning("⚠️  YouTube API key format appears unusual (typically starts with 'AIza')")
+        
+        # Validate Content API URL
         if not self.content_api_url:
             raise ValueError("CONTENT_API_URL is required")
+        
+        # Validate URL format
+        if not self.content_api_url.startswith(('http://', 'https://')):
+            raise ValueError("CONTENT_API_URL must be a valid HTTP(S) URL")
+        
+        # Check for placeholder URLs
+        if 'example.com' in self.content_api_url.lower() or 'your-api' in self.content_api_url.lower():
+            raise ValueError("CONTENT_API_URL appears to be a placeholder. Please set a real API URL.")
+        
+        # Validate Content API token
         if not self.content_api_token:
             raise ValueError("CONTENT_API_TOKEN is required")
+        
+        # Check for placeholder tokens
+        token_placeholders = ['your_api_token_here', 'your_token', 'token', 'xxx', 'test']
+        if self.content_api_token.lower() in token_placeholders:
+            raise ValueError("CONTENT_API_TOKEN appears to be a placeholder. Please set a real API token.")
