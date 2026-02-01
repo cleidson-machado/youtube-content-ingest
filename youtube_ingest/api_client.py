@@ -113,6 +113,7 @@ class APIClient:
         logger.info(f"   ├─ Duration: {video.duration_seconds} seconds ({video.duration_iso})")
         logger.info(f"   ├─ Definition: {video.definition or 'N/A'}")
         logger.info(f"   ├─ Caption: {video.caption}")
+        logger.info(f"   ├─ Published At: {video.published_at.isoformat()}")
         logger.info(f"   ├─ Views: {video.view_count:,}")
         logger.info(f"   ├─ Likes: {video.like_count:,}")
         logger.info(f"   ├─ Comments: {video.comment_count:,}")
