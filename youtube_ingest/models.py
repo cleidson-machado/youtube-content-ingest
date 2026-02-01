@@ -56,6 +56,9 @@ class Video:
         # Convert tags list to comma-separated string
         tags_string = ', '.join(self.tags) if self.tags else None
         
+        # Format publishedAt without timezone info (API expects local datetime)
+        published_at_str = self.published_at.replace(tzinfo=None).isoformat()
+        
         return {
             "title": self.title,
             "description": self.description,
@@ -75,4 +78,5 @@ class Video:
             "commentCount": self.comment_count,
             "defaultLanguage": self.default_language,
             "defaultAudioLanguage": self.default_audio_language,
+            "publishedAt": published_at_str,
         }

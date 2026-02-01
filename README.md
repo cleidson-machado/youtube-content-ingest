@@ -4,6 +4,13 @@ Automated YouTube discovery and ingest pipeline: searches YouTube, enriches vide
 
 **Refactored from:** `main_orig_bkp.py` - A professional modular architecture for better maintainability, security, and scalability.
 
+## SEMPRE ative o ambiente virtual antes de executar seus scripts se estiver usando a CLI no VPS:
+
+```bash
+cd /opt/apps/web-scraping-process/youtube-content-ingest
+source venv/bin/activate
+python main.py
+
 ## Features
 
 - **YouTube Search**: Query YouTube using the YouTube Data API v3 with pagination support
