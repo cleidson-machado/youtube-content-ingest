@@ -15,6 +15,7 @@ pipeline {
                         docker rm -f youtube-ingest || true
                         
                         # Run with environment variables (no .env needed!)
+                        CONTENT_API_URL='https://api.aguide-ptbr.com.br/api/v1' \\
                         YOUTUBE_API_KEY='${YOUTUBE_API_KEY}' \\
                         CONTENT_API_EMAIL='${CONTENT_API_EMAIL}' \\
                         CONTENT_API_PASSWORD='${CONTENT_API_PASSWORD}' \\
