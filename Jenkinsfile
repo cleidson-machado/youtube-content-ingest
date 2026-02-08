@@ -15,9 +15,9 @@ pipeline {
                         docker rm -f youtube-ingest || true
                         
                         # Run with environment variables (no .env needed!)
-                        YOUTUBE_API_KEY='${YOUTUBE_API_KEY}' \\
-                        CONTENT_API_EMAIL='${CONTENT_API_EMAIL}' \\
-                        CONTENT_API_PASSWORD='${CONTENT_API_PASSWORD}' \\
+                        YOUTUBE_API_KEY='${YOUTUBE_API_KEY}' \
+                        CONTENT_API_EMAIL='${CONTENT_API_EMAIL}' \
+                        CONTENT_API_PASSWORD='${CONTENT_API_PASSWORD}' \
                         docker compose up --build --abort-on-container-exit
                     """
                 }
