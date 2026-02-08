@@ -18,7 +18,9 @@ class Config:
     
     # Content API Configuration
     content_api_url: str
-    content_api_token: Optional[str] = None  # Bearer token for authentication
+    content_api_email: str
+    content_api_password: str
+    content_api_token: Optional[str] = None  # Bearer token (will be obtained via login)
     
     # Search Configuration
     search_query: str = "tipos de visto para portugal"
@@ -51,6 +53,8 @@ class Config:
         return cls(
             youtube_api_key=os.getenv("YOUTUBE_API_KEY", ""),
             content_api_url=os.getenv("CONTENT_API_URL", ""),
+            content_api_email=os.getenv("CONTENT_API_EMAIL", ""),
+            content_api_password=os.getenv("CONTENT_API_PASSWORD", ""),
             content_api_token=os.getenv("CONTENT_API_TOKEN"),
             search_query=os.getenv("SEARCH_QUERY", "tipos de visto para portugal"),
             target_new_videos=target_new_videos,
@@ -88,11 +92,18 @@ class Config:
         if 'example.com' in self.content_api_url.lower() or 'your-api' in self.content_api_url.lower():
             raise ValueError("CONTENT_API_URL appears to be a placeholder. Please set a real API URL.")
         
-        # Validate Content API token
-        if not self.content_api_token:
-            raise ValueError("CONTENT_API_TOKEN is required")
+        # Validate Content API credentials
+        if not self.content_api_email:
+            raise ValueError("CONTENT_API_EMAIL is required")
         
-        # Check for placeholder tokens
-        token_placeholders = ['your_api_token_here', 'your_token', 'token', 'xxx', 'test']
-        if self.content_api_token.lower() in token_placeholders:
-            raise ValueError("CONTENT_API_TOKEN appears to be a placeholder. Please set a real API token.")
+        if not self.content_api_password:
+            raise ValueError("CONTENT_API_PASSWORD is required")
+        
+        # Check for placeholder emails
+        if 'example.com' in self.content_api_email.lower() or 'your_email' in self.content_api_email.lower():
+            raise ValueError("CONTENT_API_EMAIL appears to be a placeholder. Please set a real email.")
+        
+        # Check for placeholder passwords
+        password_placeholders = ['your_password', 'password', 'xxx', 'test']
+        if self.content_api_password.lower() in password_placeholders:
+            raise ValueError("CONTENT_API_PASSWORD appears to be a placeholder. Please set a real password.")
