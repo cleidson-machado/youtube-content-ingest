@@ -18,7 +18,9 @@ class Config:
     
     # Content API Configuration
     content_api_url: str
-    content_api_token: Optional[str] = None  # Bearer token for authentication
+    content_api_email: str
+    content_api_password: str
+    content_api_token: Optional[str] = None  # Bearer token (will be obtained via login)
     
     # Search Configuration
     search_query: str = "tipos de visto para portugal"
@@ -51,6 +53,8 @@ class Config:
         return cls(
             youtube_api_key=os.getenv("YOUTUBE_API_KEY", ""),
             content_api_url=os.getenv("CONTENT_API_URL", ""),
+            content_api_email=os.getenv("CONTENT_API_EMAIL", ""),
+            content_api_password=os.getenv("CONTENT_API_PASSWORD", ""),
             content_api_token=os.getenv("CONTENT_API_TOKEN"),
             search_query=os.getenv("SEARCH_QUERY", "tipos de visto para portugal"),
             target_new_videos=target_new_videos,

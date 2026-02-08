@@ -23,13 +23,40 @@ class APIClient:
         self.config = config
         self.base_url = config.content_api_url.rstrip('/')
         self.session = requests.Session()
+        self.session.headers.update({'Content-Type': 'application/json'})
         
-        # Set up authentication headers if API token is provided
-        if config.content_api_token:
-            self.session.headers.update({
-                'Authorization': f'Bearer {config.content_api_token}',
-                'Content-Type': 'application/json',
-            })
+        # Authenticate and get token
+        self._authenticate()
+    
+    def _authenticate(self) -> None:
+        """Authenticate with the API and obtain access token."""
+        auth_url = f"{self.base_url}/auth/login"
+        auth_payload = {
+            "email": self.config.content_api_email,
+            "password": self.config.content_api_password
+        }
+        
+        logger.info(f"🔐 Authenticating with API at {auth_url}")
+        
+        try:
+            response = self.session.post(auth_url, json=auth_payload, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                token = data.get('token') or data.get('access_token') or data.get('accessToken')
+                
+                if not token:
+                    raise ValueError(f"Authentication response missing token field. Response: {data}")
+                
+                # Set Bearer token in session headers
+                self.session.headers.update({'Authorization': f'Bearer {token}'})
+                logger.info("✅ Authentication successful")
+            else:
+                raise ValueError(
+                    f"Authentication failed with status {response.status_code}: {response.text}"
+                )
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"Authentication request failed: {e}")
     
     def post_videos(self, videos: List[Video]) -> Dict[str, Any]:
         """Post videos to the content API.
@@ -129,7 +156,7 @@ class APIClient:
         Returns:
             API response.
         """
-        url = self.base_url  # Endpoint expects base URL directly
+        url = f"{self.base_url}/contents"  # Use /contents endpoint
         data = video.to_dict()
         
         try:
@@ -162,8 +189,8 @@ class APIClient:
             logger.info(f"🔍 Fetching existing URLs from endpoint: {self.base_url}")
             
             while True:
-                # Usar endpoint paginado
-                url = f"{self.base_url}/paged?page={page}&size={page_size}"
+                # Usar endpoint paginado /contents/paged
+                url = f"{self.base_url}/contents/paged?page={page}&size={page_size}"
                 
                 response = self.session.get(url, timeout=10)
                 
