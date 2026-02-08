@@ -92,18 +92,11 @@ class Config:
         if 'example.com' in self.content_api_url.lower() or 'your-api' in self.content_api_url.lower():
             raise ValueError("CONTENT_API_URL appears to be a placeholder. Please set a real API URL.")
         
-        # Validate Content API credentials
-        if not self.content_api_email:
-            raise ValueError("CONTENT_API_EMAIL is required")
+        # Validate Content API token
+        if not self.content_api_token:
+            raise ValueError("CONTENT_API_TOKEN is required")
         
-        if not self.content_api_password:
-            raise ValueError("CONTENT_API_PASSWORD is required")
-        
-        # Check for placeholder emails
-        if 'example.com' in self.content_api_email.lower() or 'your_email' in self.content_api_email.lower():
-            raise ValueError("CONTENT_API_EMAIL appears to be a placeholder. Please set a real email.")
-        
-        # Check for placeholder passwords
-        password_placeholders = ['your_password', 'password', 'xxx', 'test']
-        if self.content_api_password.lower() in password_placeholders:
-            raise ValueError("CONTENT_API_PASSWORD appears to be a placeholder. Please set a real password.")
+        # Check for placeholder tokens
+        token_placeholders = ['your_api_token_here', 'your_token', 'token', 'xxx', 'test']
+        if self.content_api_token.lower() in token_placeholders:
+            raise ValueError("CONTENT_API_TOKEN appears to be a placeholder. Please set a real API token.")
