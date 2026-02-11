@@ -218,8 +218,8 @@ class APIClient:
                     logger.info(f"  ℹ️  Page {page + 1}: No items found")
                     break
                 
-                # Adicionar URLs ao set
-                page_urls = {item['url'] for item in items if 'url' in item}
+                # Adicionar URLs ao set (campo agora é videoUrl)
+                page_urls = {item['videoUrl'] for item in items if 'videoUrl' in item}
                 all_urls.update(page_urls)
                 
                 current_page = data.get('currentPage', page)

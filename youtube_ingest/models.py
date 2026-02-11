@@ -62,10 +62,10 @@ class Video:
         return {
             "title": self.title,
             "description": self.description,
-            "url": f"https://www.youtube.com/watch?v={self.video_id}",
+            "videoUrl": f"https://www.youtube.com/watch?v={self.video_id}",
             "channelName": self.channel_title,
             "type": "VIDEO",
-            "thumbnailUrl": self.thumbnail_url,
+            "videoThumbnailUrl": self.thumbnail_url,
             "categoryId": self.category_id,
             "categoryName": self.category_name,
             "tags": tags_string,
