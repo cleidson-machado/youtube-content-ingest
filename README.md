@@ -283,6 +283,11 @@ This refactored version improves upon `main_orig_bkp.py` with:
 - **URL-based deduplication**: Uses URLs for duplicate checking (same as original)
 - **Detailed logging**: Beautiful console output with emojis and progress indicators
 
+## Add Developer Branhe using Git Flow
+- Today 11-02-2026, we will create a new branch called  `developer` using Git Flow. This branch will be used for development and testing of new features before merging them into the main branch.
+
+```bash
+
 ## License
 
 This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
