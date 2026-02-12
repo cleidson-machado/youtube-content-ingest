@@ -8,7 +8,7 @@ from typing import Optional, List, Dict, Any
 @dataclass
 class SearchQuery:
     """Represents a YouTube search query."""
-    
+
     query: str
     max_results: int = 10
     order: str = "relevance"  # relevance, date, rating, viewCount, title
@@ -21,19 +21,19 @@ class SearchQuery:
 @dataclass
 class Video:
     """Represents a YouTube video with enriched metadata."""
-    
+
     video_id: str
     title: str
     description: str
     channel_id: str
     channel_title: str
     published_at: datetime
-    
+
     # Statistics
     view_count: int = 0
     like_count: int = 0
     comment_count: int = 0
-    
+
     # Additional metadata
     tags: List[str] = field(default_factory=list)
     category_id: Optional[str] = None
@@ -41,29 +41,34 @@ class Video:
     duration_seconds: int = 0
     duration_iso: Optional[str] = None
     thumbnail_url: Optional[str] = None
-    
+
     # Video quality metadata
     definition: Optional[str] = None  # 'hd' or 'sd'
     caption: bool = False
     default_language: Optional[str] = None
     default_audio_language: Optional[str] = None
-    
+
     # Enriched data
     enriched_metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert video to dictionary format for API submission."""
         # Convert tags list to comma-separated string
         tags_string = ', '.join(self.tags) if self.tags else None
-        
+
         # Format publishedAt without timezone info (API expects local datetime)
         published_at_str = self.published_at.replace(tzinfo=None).isoformat()
-        
+
+        # Build channel URL using stable channel ID format
+        channel_url = f"https://www.youtube.com/channel/{self.channel_id}"
+
         return {
             "title": self.title,
             "description": self.description,
             "videoUrl": f"https://www.youtube.com/watch?v={self.video_id}",
             "channelName": self.channel_title,
+            "channelId": self.channel_id,
+            "channelOwnerLinkId": channel_url,
             "type": "VIDEO",
             "videoThumbnailUrl": self.thumbnail_url,
             "categoryId": self.category_id,
